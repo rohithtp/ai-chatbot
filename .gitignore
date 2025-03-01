@@ -32,7 +32,21 @@ yarn-error.log*
 # turbo
 .turbo
 
+# logs
+*.log
+
+# IDE specific files
+.idea/
+.vscode/
+
+# build artifacts
+dist/
+build/
+
+# temporary files
+*.tmp
+*.temp
+
 .env
 .vercel
-.vscode
 .env*.local
