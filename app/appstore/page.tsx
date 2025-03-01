@@ -10,7 +10,7 @@ interface Server {
   name: string;
   description: string;
   iconUrl: string;
-  category: string;
+  categories: string[];
   configData: Record<string, any>;
 }
 
@@ -51,7 +51,7 @@ export default function AppStorePage() {
   const filteredServers = servers.filter(server => {
     const matchesSearch = server.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       server.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || server.category === selectedCategory;
+    const matchesCategory = selectedCategory === 'all' || server.categories.includes(selectedCategory);
     return matchesSearch && matchesCategory;
   });
 

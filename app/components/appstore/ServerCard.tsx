@@ -11,7 +11,7 @@ interface Server {
   name: string;
   description: string;
   iconUrl: string;
-  category: string;
+  categories: string[];
   configData: Record<string, any>;
   isInstalled?: boolean;
 }
@@ -50,7 +50,8 @@ export default function ServerCard({ server }: ServerCardProps) {
     }
   };
 
-  const Icon = Icons[server.category as keyof typeof Icons] || Icons.plugin;
+  const primaryCategory = server.categories[0] || 'plugin';
+  const Icon = Icons[primaryCategory as keyof typeof Icons] || Icons.plugin;
 
   return (
     <Card className="flex flex-col h-full">

@@ -7,7 +7,7 @@ export const mockServers = [
     name: 'Basic Chat Server',
     description: 'A simple chat server for basic conversations',
     iconUrl: '/icons/chat.png',
-    category: 'chat',
+    categories: ['chat'],
     configData: {
       // Server-specific configuration
     },
@@ -17,7 +17,7 @@ export const mockServers = [
     name: 'Advanced AI Assistant',
     description: 'An advanced AI assistant with enhanced capabilities',
     iconUrl: '/icons/ai.png',
-    category: 'ai',
+    categories: ['ai', 'chat'],
     configData: {
       // Server-specific configuration
     },
@@ -27,7 +27,7 @@ export const mockServers = [
     name: 'Productivity Tools',
     description: 'A collection of productivity enhancement tools',
     iconUrl: '/icons/tools.png',
-    category: 'productivity',
+    categories: ['productivity', 'tools'],
     configData: {
       // Server-specific configuration
     },
