@@ -30,8 +30,8 @@ export default function SearchFilter({
   selectedCategory,
 }: SearchFilterProps) {
   return (
-    <div className="flex flex-wrap gap-4">
-      <div className="flex-grow min-w-[200px] relative">
+    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full">
+      <div className="relative flex-grow">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search servers"
@@ -40,7 +40,7 @@ export default function SearchFilter({
         />
       </div>
       <Select value={selectedCategory} onValueChange={onCategoryChange}>
-        <SelectTrigger className="min-w-[200px]">
+        <SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]">
           <SelectValue placeholder="Select category" />
         </SelectTrigger>
         <SelectContent>

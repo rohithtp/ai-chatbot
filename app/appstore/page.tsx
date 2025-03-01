@@ -57,10 +57,10 @@ export default function AppStorePage() {
 
   return (
     <div className="flex-1 overflow-auto">
-      <div className="container max-w-6xl mx-auto p-6 space-y-8">
-        <div className="flex flex-col gap-4">
-          <h1 className="text-2xl font-bold">App Store</h1>
-          <p className="text-muted-foreground">
+      <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-8">
+        <div className="flex flex-col gap-2 sm:gap-4">
+          <h1 className="text-xl sm:text-2xl font-bold">App Store</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Browse and install MCP servers to enhance your chat experience
           </p>
         </div>
@@ -76,12 +76,12 @@ export default function AppStorePage() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {filteredServers.map((server) => (
               <ServerCard key={server.id} server={server} />
             ))}
             {filteredServers.length === 0 && (
-              <div className="col-span-full text-center py-12 text-muted-foreground">
+              <div className="col-span-full text-center py-8 sm:py-12 text-muted-foreground">
                 No servers found matching your criteria
               </div>
             )}

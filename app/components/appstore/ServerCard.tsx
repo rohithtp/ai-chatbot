@@ -54,32 +54,33 @@ export default function ServerCard({ server }: ServerCardProps) {
   const Icon = Icons[primaryCategory as keyof typeof Icons] || Icons.plugin;
 
   return (
-    <Card className="flex flex-col h-full">
-      <div className="relative aspect-square p-6 flex items-center justify-center bg-muted">
-        <div className="relative w-32 h-32 flex items-center justify-center">
+    <Card className="flex flex-col h-full overflow-hidden">
+      <div className="relative p-4 sm:p-6 flex items-center justify-center bg-muted">
+        <div className="relative w-24 h-24 sm:w-32 sm:h-32 flex items-center justify-center">
           {server.iconUrl ? (
             <img
               src={server.iconUrl}
               alt={server.name}
-              className="object-contain"
+              className="object-contain max-w-full max-h-full"
               width={128}
               height={128}
             />
           ) : (
-            <Icon className="w-16 h-16 text-muted-foreground" />
+            <Icon className="w-12 h-12 sm:w-16 sm:h-16 text-muted-foreground" />
           )}
         </div>
       </div>
-      <CardContent className="flex-grow p-6">
-        <h3 className="font-semibold text-xl mb-2">{server.name}</h3>
-        <p className="text-sm text-muted-foreground">{server.description}</p>
+      <CardContent className="flex-grow p-4 sm:p-6">
+        <h3 className="font-semibold text-lg sm:text-xl mb-1 sm:mb-2 line-clamp-1">{server.name}</h3>
+        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3">{server.description}</p>
       </CardContent>
-      <CardFooter className="p-6 pt-0">
+      <CardFooter className="p-4 sm:p-6 pt-0">
         <Button
           className="w-full"
           variant={isInstalled ? "outline" : "default"}
           onClick={handleInstall}
           disabled={isInstalling || isInstalled}
+          size="sm"
         >
           {isInstalled ? 'Installed' : isInstalling ? 'Installing...' : 'Install'}
         </Button>
