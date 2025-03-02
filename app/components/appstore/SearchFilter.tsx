@@ -39,18 +39,24 @@ export default function SearchFilter({
           className="w-full pl-9"
         />
       </div>
-      <Select value={selectedCategory} onValueChange={onCategoryChange}>
-        <SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]">
-          <SelectValue placeholder="Select category" />
-        </SelectTrigger>
-        <SelectContent>
-          {categories.map((category) => (
-            <SelectItem key={category.value} value={category.value}>
-              {category.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="min-w-[180px] w-full sm:w-auto">
+        <Select value={selectedCategory} onValueChange={onCategoryChange}>
+          <SelectTrigger className="w-full bg-background border-2 focus:ring-2 focus:ring-ring focus:ring-offset-2">
+            <SelectValue placeholder="Select category" />
+          </SelectTrigger>
+          <SelectContent className="min-w-[180px]">
+            {categories.map((category) => (
+              <SelectItem 
+                key={category.value} 
+                value={category.value}
+                className={selectedCategory === category.value ? "bg-secondary text-secondary-foreground" : ""}
+              >
+                {category.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
     </div>
   );
 } 

@@ -8,7 +8,11 @@ import { toast } from 'sonner';
 interface Server {
   id: string;
   name: string;
+  title: string;
   description: string;
+  stars: number;
+  tags: string[];
+  icon: string;
   iconUrl: string;
   categories: string[];
   configData: Record<string, any>;
@@ -49,15 +53,22 @@ export default function AppStorePage() {
   };
 
   const filteredServers = servers.filter(server => {
-    const matchesSearch = server.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      server.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || server.categories.includes(selectedCategory);
+    const matchesSearch = 
+      server.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      server.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      server.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      server.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    const matchesCategory = 
+      selectedCategory === 'all' || 
+      server.categories.some(cat => cat.toLowerCase() === selectedCategory.toLowerCase());
+    
     return matchesSearch && matchesCategory;
   });
 
   return (
-    <div className="flex-1 overflow-auto">
-      <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-8">
+    <div className="flex flex-col min-w-0 h-dvh bg-background">
+      <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-8 w-full">
         <div className="flex flex-col gap-2 sm:gap-4">
           <h1 className="text-xl sm:text-2xl font-bold">App Store</h1>
           <p className="text-sm sm:text-base text-muted-foreground">
@@ -76,15 +87,17 @@ export default function AppStorePage() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {filteredServers.map((server) => (
-              <ServerCard key={server.id} server={server} />
-            ))}
-            {filteredServers.length === 0 && (
-              <div className="col-span-full text-center py-8 sm:py-12 text-muted-foreground">
-                No servers found matching your criteria
-              </div>
-            )}
+          <div className="w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 w-full">
+              {filteredServers.map((server) => (
+                <ServerCard key={server.id} server={server} />
+              ))}
+              {filteredServers.length === 0 && (
+                <div className="col-span-full text-center py-8 sm:py-12 text-muted-foreground w-full bg-muted rounded-md">
+                  No servers found matching your criteria
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

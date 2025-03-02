@@ -10,6 +10,10 @@ interface UserConfig {
   servers: Array<{
     id: string;
     name: string;
+    title: string;
+    stars: number;
+    tags: string[];
+    icon: string;
     configData: Record<string, any>;
   }>;
 }
@@ -84,6 +88,10 @@ export async function POST(request: Request) {
     userConfig.servers.push({
       id: server.id,
       name: server.name,
+      title: server.title,
+      stars: server.stars,
+      tags: server.tags,
+      icon: server.icon || server.iconUrl,
       configData: server.configData
     });
 

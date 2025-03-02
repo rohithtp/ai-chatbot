@@ -5,7 +5,11 @@ export const mockServers = [
   {
     id: '1',
     name: 'Basic Chat Server',
+    title: 'Basic Chat',
     description: 'A simple chat server for basic conversations',
+    stars: 245,
+    tags: ['communication', 'simple', 'beginner-friendly'],
+    icon: '/icons/chat.png',
     iconUrl: '/icons/chat.png',
     categories: ['chat'],
     configData: {
@@ -15,7 +19,11 @@ export const mockServers = [
   {
     id: '2',
     name: 'Advanced AI Assistant',
+    title: 'AI Assistant Pro',
     description: 'An advanced AI assistant with enhanced capabilities',
+    stars: 1892,
+    tags: ['artificial intelligence', 'productivity', 'automation'],
+    icon: '/icons/ai.png',
     iconUrl: '/icons/ai.png',
     categories: ['ai', 'chat'],
     configData: {
@@ -25,7 +33,11 @@ export const mockServers = [
   {
     id: '3',
     name: 'Productivity Tools',
+    title: 'Productivity Suite',
     description: 'A collection of productivity enhancement tools',
+    stars: 763,
+    tags: ['productivity', 'organization', 'time-management'],
+    icon: '/icons/tools.png',
     iconUrl: '/icons/tools.png',
     categories: ['productivity', 'tools'],
     configData: {
