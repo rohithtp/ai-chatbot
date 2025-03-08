@@ -1,0 +1,52 @@
+{
+  "userId": "c30514ec-e502-4dbc-905e-0dbe4dc4c846",
+  "email": "user@mail.com",
+  "installedServers": {
+    "1": {
+      "installedAt": "2025-03-08T08:39:21.238Z",
+      "lastUsed": "2025-03-08T08:39:21.238Z",
+      "version": "1.0.0",
+      "configData": {
+        "settings": {
+          "maxMessages": 1000,
+          "retentionDays": 30
+        },
+        "preferences": {
+          "theme": "light",
+          "notifications": true
+        }
+      }
+    },
+    "2": {
+      "installedAt": "2024-03-19T14:20:00Z",
+      "lastUsed": "2024-03-21T16:45:00Z",
+      "version": "2.1.0",
+      "configData": {
+        "settings": {
+          "model": "gpt-4",
+          "temperature": 0.8,
+          "maxTokens": 4000
+        },
+        "preferences": {
+          "autoComplete": true,
+          "suggestions": true
+        }
+      }
+    }
+  },
+  "globalPreferences": {
+    "theme": "system",
+    "language": "en",
+    "notifications": {
+      "enabled": true,
+      "sound": true,
+      "desktop": true
+    },
+    "accessibility": {
+      "highContrast": false,
+      "fontSize": "medium"
+    }
+  },
+  "lastSyncedAt": "2025-03-08T08:39:21.238Z",
+  "schemaVersion": "1.0"
+}

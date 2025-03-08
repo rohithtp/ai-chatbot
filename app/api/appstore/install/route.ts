@@ -6,16 +6,37 @@ import path from 'path';
 // Import mock servers (in production, this would come from a database)
 import { mockServers } from '../servers/route';
 
+interface ServerConfig {
+  settings: Record<string, any>;
+  preferences: Record<string, any>;
+}
+
 interface UserConfig {
-  servers: Array<{
-    id: string;
-    name: string;
-    title: string;
-    stars: number;
-    tags: string[];
-    icon: string;
-    configData: Record<string, any>;
-  }>;
+  userId: string;
+  email: string;
+  installedServers: {
+    [key: string]: {
+      installedAt: string;
+      lastUsed: string;
+      version: string;
+      configData: ServerConfig;
+    };
+  };
+  globalPreferences: {
+    theme: string;
+    language: string;
+    notifications: {
+      enabled: boolean;
+      sound: boolean;
+      desktop: boolean;
+    };
+    accessibility?: {
+      highContrast: boolean;
+      fontSize: string;
+    };
+  };
+  lastSyncedAt: string;
+  schemaVersion: string;
 }
 
 async function getUserConfig(userId: string): Promise<UserConfig> {
@@ -26,7 +47,20 @@ async function getUserConfig(userId: string): Promise<UserConfig> {
   } catch (error) {
     // If file doesn't exist, return default config
     return {
-      servers: []
+      userId,
+      email: '', // Will be updated in the install process
+      installedServers: {},
+      globalPreferences: {
+        theme: 'system',
+        language: 'en',
+        notifications: {
+          enabled: true,
+          sound: true,
+          desktop: true
+        }
+      },
+      lastSyncedAt: new Date().toISOString(),
+      schemaVersion: '1.0'
     };
   }
 }
@@ -48,7 +82,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { serverId } = await request.json();
+    const { serverId, configData } = await request.json();
     if (!serverId) {
       return NextResponse.json(
         { error: 'Server ID is required' },
@@ -66,7 +100,7 @@ export async function POST(request: Request) {
     }
 
     // Get user's current config
-    const userId = session.user.id || session.user.email;
+    const userId = session.user.id;
     if (!userId) {
       return NextResponse.json(
         { error: 'User ID not found' },
@@ -77,7 +111,7 @@ export async function POST(request: Request) {
     const userConfig = await getUserConfig(userId);
 
     // Check if server is already installed
-    if (userConfig.servers.some(s => s.id === serverId)) {
+    if (userConfig.installedServers[serverId]) {
       return NextResponse.json(
         { error: 'Server already installed' },
         { status: 400 }
@@ -85,22 +119,32 @@ export async function POST(request: Request) {
     }
 
     // Add server to user's config
-    userConfig.servers.push({
-      id: server.id,
-      name: server.name,
-      title: server.title,
-      stars: server.stars,
-      tags: server.tags,
-      icon: server.icon || server.iconUrl,
-      configData: server.configData
-    });
+    const now = new Date().toISOString();
+    userConfig.email = session.user.email || '';
+    userConfig.installedServers[serverId] = {
+      installedAt: now,
+      lastUsed: now,
+      version: server.version || '1.0.0',
+      configData: {
+        settings: {
+          ...server.configData.settings,
+          ...configData?.settings
+        },
+        preferences: {
+          ...server.configData.preferences,
+          ...configData?.preferences
+        }
+      }
+    };
+    userConfig.lastSyncedAt = now;
 
     // Save updated config
     await saveUserConfig(userId, userConfig);
 
     return NextResponse.json({ 
       success: true,
-      message: 'Server installed successfully'
+      message: 'Server installed successfully',
+      installedServer: userConfig.installedServers[serverId]
     });
   } catch (error) {
     console.error('Error installing server:', error);

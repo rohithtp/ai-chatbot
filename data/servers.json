@@ -1,0 +1,61 @@
+{
+  "servers": [
+    {
+      "id": "1",
+      "name": "Basic Chat Server",
+      "title": "Basic Chat",
+      "description": "A simple and efficient chat server for basic communication needs",
+      "stars": 245,
+      "tags": [
+        "communication",
+        "simple",
+        "beginner-friendly"
+      ],
+      "icon": "/icons/chat.png",
+      "categories": ["communication"],
+      "defaultConfig": {
+        "settings": {
+          "maxMessages": 1000,
+          "retentionDays": 30
+        },
+        "preferences": {
+          "theme": "light",
+          "notifications": true
+        }
+      },
+      "version": "1.0.0",
+      "author": "ChatUI Team",
+      "website": "https://chatui.com/servers/basic-chat"
+    },
+    {
+      "id": "2",
+      "name": "Advanced AI Assistant",
+      "title": "AI Assistant Pro",
+      "description": "Advanced AI-powered assistant with cutting-edge features",
+      "stars": 1892,
+      "tags": [
+        "artificial intelligence",
+        "productivity",
+        "automation"
+      ],
+      "icon": "/icons/ai.png",
+      "categories": ["ai", "productivity"],
+      "defaultConfig": {
+        "settings": {
+          "model": "gpt-4",
+          "temperature": 0.7,
+          "maxTokens": 2000
+        },
+        "preferences": {
+          "autoComplete": true,
+          "suggestions": true
+        }
+      },
+      "version": "2.1.0",
+      "author": "AI Labs",
+      "website": "https://ailabs.com/assistant-pro"
+    }
+  ],
+  "lastUpdated": "2024-03-21T16:45:00Z",
+  "schemaVersion": "1.0"
+} 

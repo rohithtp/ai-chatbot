@@ -1,7 +1,26 @@
 import { NextResponse } from 'next/server';
 
+interface ServerConfig {
+  settings: Record<string, any>;
+  preferences: Record<string, any>;
+}
+
+interface Server {
+  id: string;
+  name: string;
+  title: string;
+  description: string;
+  stars: number;
+  tags: string[];
+  icon: string;
+  iconUrl: string;
+  categories: string[];
+  configData: ServerConfig;
+  version: string;
+}
+
 // Mock servers data (in production, this would come from a database)
-export const mockServers = [
+export const mockServers: Server[] = [
   {
     id: '1',
     name: 'Basic Chat Server',
@@ -12,9 +31,17 @@ export const mockServers = [
     icon: '/icons/chat.png',
     iconUrl: '/icons/chat.png',
     categories: ['chat'],
+    version: '1.0.0',
     configData: {
-      // Server-specific configuration
-    },
+      settings: {
+        maxMessages: 1000,
+        retentionDays: 30
+      },
+      preferences: {
+        theme: 'light',
+        notifications: true
+      }
+    }
   },
   {
     id: '2',
@@ -26,9 +53,18 @@ export const mockServers = [
     icon: '/icons/ai.png',
     iconUrl: '/icons/ai.png',
     categories: ['ai', 'chat'],
+    version: '2.1.0',
     configData: {
-      // Server-specific configuration
-    },
+      settings: {
+        model: 'gpt-4',
+        temperature: 0.7,
+        maxTokens: 2000
+      },
+      preferences: {
+        autoComplete: true,
+        suggestions: true
+      }
+    }
   },
   {
     id: '3',
@@ -40,10 +76,18 @@ export const mockServers = [
     icon: '/icons/tools.png',
     iconUrl: '/icons/tools.png',
     categories: ['productivity', 'tools'],
+    version: '1.2.0',
     configData: {
-      // Server-specific configuration
-    },
-  },
+      settings: {
+        autoSave: true,
+        syncInterval: 5
+      },
+      preferences: {
+        darkMode: true,
+        compactView: false
+      }
+    }
+  }
 ];
 
 export async function GET() {

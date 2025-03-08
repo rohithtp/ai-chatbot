@@ -5,6 +5,11 @@ import ServerCard from '../components/appstore/ServerCard';
 import SearchFilter from '../components/appstore/SearchFilter';
 import { toast } from 'sonner';
 
+interface ServerConfig {
+  settings: Record<string, any>;
+  preferences: Record<string, any>;
+}
+
 interface Server {
   id: string;
   name: string;
@@ -15,7 +20,10 @@ interface Server {
   icon: string;
   iconUrl: string;
   categories: string[];
-  configData: Record<string, any>;
+  configData: ServerConfig;
+  isInstalled?: boolean;
+  installedAt?: string;
+  lastUsed?: string;
 }
 
 export default function AppStorePage() {
@@ -25,23 +33,42 @@ export default function AppStorePage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchServers = async () => {
+    const fetchServersAndUserConfig = async () => {
       try {
-        const response = await fetch('/api/appstore/servers');
-        const data = await response.json();
-        if (data.error) {
-          throw new Error(data.error);
+        // Fetch available servers
+        const serversResponse = await fetch('/api/appstore/servers');
+        const serversData = await serversResponse.json();
+        if (serversData.error) {
+          throw new Error(serversData.error);
         }
-        setServers(data.servers);
+
+        // Fetch user's installed servers
+        const userConfigResponse = await fetch('/api/appstore/user-servers');
+        const userConfigData = await userConfigResponse.json();
+        
+        // Mark servers as installed if they exist in user's config
+        const installedServerIds = new Set(
+          Object.keys(userConfigData.installedServers || {})
+        );
+
+        const serversWithInstallState = serversData.servers.map((server: Server) => ({
+          ...server,
+          isInstalled: installedServerIds.has(server.id),
+          installedAt: userConfigData.installedServers?.[server.id]?.installedAt,
+          lastUsed: userConfigData.installedServers?.[server.id]?.lastUsed,
+          configData: userConfigData.installedServers?.[server.id]?.configData || server.configData
+        }));
+
+        setServers(serversWithInstallState);
       } catch (error) {
-        console.error('Error fetching servers:', error);
+        console.error('Error fetching data:', error);
         toast.error('Failed to load servers');
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchServers();
+    fetchServersAndUserConfig();
   }, []);
 
   const handleSearch = (query: string) => {
@@ -50,6 +77,11 @@ export default function AppStorePage() {
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
+  };
+
+  const handleConfigureServer = (server: Server) => {
+    // TODO: Implement server configuration modal/page
+    console.log('Configure server:', server);
   };
 
   const filteredServers = servers.filter(server => {
@@ -90,7 +122,11 @@ export default function AppStorePage() {
           <div className="w-full">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 w-full">
               {filteredServers.map((server) => (
-                <ServerCard key={server.id} server={server} />
+                <ServerCard 
+                  key={server.id} 
+                  server={server}
+                  onConfigureServer={handleConfigureServer}
+                />
               ))}
               {filteredServers.length === 0 && (
                 <div className="col-span-full text-center py-8 sm:py-12 text-muted-foreground w-full bg-muted rounded-md">
