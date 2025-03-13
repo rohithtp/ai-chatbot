@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import ServerCard, { ServerCardProps } from "./ServerCard"
 import SearchFilter from "./SearchFilter"
-import { Input } from "@/components/ui/input"
 
 type Server = ServerCardProps["server"]
 
@@ -82,13 +81,7 @@ export default function AppStore() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center space-x-4 p-4 border-b">
-        <Input
-          placeholder="Search servers..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="max-w-sm"
-        />
+      <div className="p-4 border-b">
         <SearchFilter
           onSearch={(query) => setSearchQuery(query)}
           selectedCategory={selectedCategory}
