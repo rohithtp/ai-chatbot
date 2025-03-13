@@ -18,8 +18,8 @@
       }
     },
     "2": {
-      "installedAt": "2024-03-19T14:20:00Z",
-      "lastUsed": "2024-03-21T16:45:00Z",
+      "installedAt": "2025-03-09T16:01:42.824Z",
+      "lastUsed": "2025-03-09T16:01:42.824Z",
       "version": "2.1.0",
       "configData": {
         "settings": {
@@ -47,6 +47,6 @@
       "fontSize": "medium"
     }
   },
-  "lastSyncedAt": "2025-03-08T08:39:21.238Z",
+  "lastSyncedAt": "2025-03-09T16:01:42.824Z",
   "schemaVersion": "1.0"
 }

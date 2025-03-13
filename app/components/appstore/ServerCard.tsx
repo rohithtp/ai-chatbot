@@ -29,7 +29,7 @@ interface Server {
   lastUsed?: string;
 }
 
-interface ServerCardProps {
+export interface ServerCardProps {
   server: Server;
   onConfigureServer?: (server: Server) => void;
 }

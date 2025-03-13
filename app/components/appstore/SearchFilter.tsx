@@ -29,6 +29,13 @@ export default function SearchFilter({
   onCategoryChange,
   selectedCategory,
 }: SearchFilterProps) {
+  console.log("SearchFilter render:", { selectedCategory })
+
+  const handleCategoryChange = (value: string) => {
+    console.log("Category changed to:", value)
+    onCategoryChange(value)
+  }
+
   return (
     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full">
       <div className="relative flex-grow">
@@ -40,7 +47,7 @@ export default function SearchFilter({
         />
       </div>
       <div className="min-w-[180px] w-full sm:w-auto">
-        <Select value={selectedCategory} onValueChange={onCategoryChange}>
+        <Select value={selectedCategory} onValueChange={handleCategoryChange}>
           <SelectTrigger className="w-full bg-background border-2 focus:ring-2 focus:ring-ring focus:ring-offset-2">
             <SelectValue placeholder="Select category" />
           </SelectTrigger>
