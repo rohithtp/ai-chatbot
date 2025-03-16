@@ -5,7 +5,6 @@ export default defineConfig({
   schema: './lib/db/schema.ts',
   out: './lib/db/migrations',
   dialect: 'sqlite',
-  driver: 'better-sqlite',
   dbCredentials: {
     url: path.join(process.cwd(), 'sqlite.db'),
   },
