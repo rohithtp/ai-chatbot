@@ -1,6 +1,6 @@
 'use client';
 
-import type { Attachment, UIMessage } from 'ai';
+import type { Attachment, UIMessage, Message } from 'ai';
 import { useChat } from '@ai-sdk/react';
 import { useState } from 'react';
 import useSWR, { useSWRConfig } from 'swr';
@@ -13,6 +13,14 @@ import { Messages } from './messages';
 import { VisibilityType } from './visibility-selector';
 import { useArtifactSelector } from '@/hooks/use-artifact';
 import { toast } from 'sonner';
+
+interface PostgresToolCall {
+  toolCallId: string;
+  function: 'mcp_postgres_local_query';
+  args: {
+    sql: string;
+  };
+}
 
 export function Chat({
   id,
@@ -52,6 +60,26 @@ export function Chat({
     onError: () => {
       toast.error('An error occured, please try again!');
     },
+    onToolCall: async ({ toolCall }) => {
+      const args = toolCall.args as { sql: string; type: string };
+      if ((toolCall as any).function === 'mcp_postgres_local_query') {
+        try {
+          const response = await fetch('/api/chat/tools/postgres', {
+            method: 'POST',
+            body: JSON.stringify({ 
+              query: args.sql,
+              type: args.type || 'chat_statistics' // default to chat_statistics if no type provided
+            }),
+          });
+          if (!response.ok) throw new Error('Database query failed');
+          return await response.json();
+        } catch (error: unknown) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          toast.error('Database query failed: ' + errorMessage);
+          return { error: errorMessage };
+        }
+      }
+    },
   });
 
   const { data: votes } = useSWR<Array<Vote>>(
@@ -81,6 +109,7 @@ export function Chat({
           reload={reload}
           isReadonly={isReadonly}
           isArtifactVisible={isArtifactVisible}
+          append={append}
         />
 
         <form className="flex mx-auto px-4 bg-background pb-4 md:pb-6 gap-2 w-full md:max-w-3xl">

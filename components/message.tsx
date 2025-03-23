@@ -19,6 +19,7 @@ import { MessageEditor } from './message-editor';
 import { DocumentPreview } from './document-preview';
 import { MessageReasoning } from './message-reasoning';
 import { UseChatHelpers } from '@ai-sdk/react';
+import { ChatStatistics, UserActivity, MessageHistory, VoteAnalytics, ChatVisibility } from './analytics';
 
 const PurePreviewMessage = ({
   chatId,
@@ -188,6 +189,22 @@ const PurePreviewMessage = ({
                     <div key={toolCallId}>
                       {toolName === 'getWeather' ? (
                         <Weather weatherAtLocation={result} />
+                      ) : toolName === 'mcp_postgres_local_query' ? (
+                        <div className="flex flex-col gap-4">
+                          {result.type === 'chat_statistics' ? (
+                            <ChatStatistics data={result.rows} />
+                          ) : result.type === 'user_activity' ? (
+                            <UserActivity data={result.rows} />
+                          ) : result.type === 'message_history' ? (
+                            <MessageHistory data={result.rows} />
+                          ) : result.type === 'vote_analytics' ? (
+                            <VoteAnalytics data={result.rows} />
+                          ) : result.type === 'chat_visibility' ? (
+                            <ChatVisibility data={result.rows} />
+                          ) : (
+                            <pre>{JSON.stringify(result, null, 2)}</pre>
+                          )}
+                        </div>
                       ) : toolName === 'createDocument' ? (
                         <DocumentPreview
                           isReadonly={isReadonly}

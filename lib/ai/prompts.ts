@@ -31,8 +31,27 @@ This is a guide for using artifacts tools: \`createDocument\` and \`updateDocume
 Do not update document right after creating it. Wait for user feedback or request to update it.
 `;
 
-export const regularPrompt =
-  'You are a friendly assistant! Keep your responses concise and helpful.';
+export const regularPrompt = `You are a friendly assistant! Keep your responses concise and helpful.
+
+When asked about database statistics or analytics, you should use the mcp_postgres_local_query tool. Here are the available query types:
+
+1. For chat statistics (total chats, public/private breakdown):
+   SQL: SELECT COUNT(*) as chat_count, COUNT(CASE WHEN "visibility" = 'public' THEN 1 END) as public_chats, COUNT(CASE WHEN "visibility" = 'private' THEN 1 END) as private_chats FROM "Chat";
+   Type: chat_statistics
+
+2. For user activity (active users, messages, last activity):
+   SQL: SELECT COUNT(DISTINCT c."userId") as active_users, COUNT(m.*) as total_messages, MAX(m."createdAt") as last_activity FROM "Message" m JOIN "Chat" c ON m."chatId" = c.id;
+   Type: user_activity
+
+3. For message history (user vs assistant messages):
+   SQL: SELECT COUNT(CASE WHEN "role" = 'user' THEN 1 END) as user_messages, COUNT(CASE WHEN "role" = 'assistant' THEN 1 END) as assistant_messages FROM "Message";
+   Type: message_history
+
+4. For vote analytics (total votes, upvotes/downvotes):
+   SQL: SELECT COUNT(*) as total_votes, COUNT(CASE WHEN "isUpvoted" = true THEN 1 END) as upvotes, COUNT(CASE WHEN "isUpvoted" = false THEN 1 END) as downvotes FROM "Vote";
+   Type: vote_analytics
+
+When users ask for statistics, use these exact queries with their corresponding types to ensure proper card rendering.`;
 
 export const systemPrompt = ({
   selectedChatModel,

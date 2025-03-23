@@ -137,13 +137,21 @@ export async function POST(request: Request) {
         maxSteps: 5,
         experimental_activeTools: [
           'getWeather',
+          'mcp_postgres_local_query',
           'createDocument',
           'updateDocument',
           'requestSuggestions',
         ],
         experimental_transform: smoothStream({ chunking: 'word' }),
         tools: {
-          // Your tool implementations
+          mcp_postgres_local_query: async ({ sql: query }) => {
+            try {
+              const result = await sql.query(query);
+              return { rows: result.rows };
+            } catch (error) {
+              return { error: error.message };
+            }
+          },
         },
       });
       
@@ -151,6 +159,62 @@ export async function POST(request: Request) {
     },
   });
 }
+```
+
+### Adding Postgres Tool Integration
+
+To add Postgres database querying capabilities as an MCP tool:
+
+```typescript
+// app/(chat)/api/chat/route.ts
+import { sql } from '@vercel/postgres';
+
+// ... existing imports ...
+
+export async function POST(request: Request) {
+  // ... existing code ...
+
+  return createDataStreamResponse({
+    execute: (dataStream) => {
+      const result = streamText({
+        model: myProvider.languageModel(selectedChatModel),
+        system: systemPrompt({ selectedChatModel }),
+        messages,
+        maxSteps: 5,
+        experimental_activeTools: [
+          'getWeather',
+          'mcp_postgres_local_query',
+          'createDocument',
+          'updateDocument',
+          'requestSuggestions',
+        ],
+        tools: {
+          mcp_postgres_local_query: async ({ sql: query }) => {
+            try {
+              const result = await sql.query(query);
+              return { rows: result.rows };
+            } catch (error) {
+              return { error: error.message };
+            }
+          },
+        },
+      });
+      
+      return result;
+    },
+  });
+}
+```
+
+The Postgres tool can be used in chat messages like this:
+```typescript
+// Example tool call in chat
+<tool>mcp_postgres_local_query</tool>
+<args>
+{
+  "sql": "SELECT * FROM users LIMIT 5"
+}
+</args>
 ```
 
 ## MCP Features

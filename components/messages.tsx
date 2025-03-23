@@ -6,6 +6,10 @@ import { memo } from 'react';
 import { Vote } from '@/lib/db/schema';
 import equal from 'fast-deep-equal';
 import { UseChatHelpers } from '@ai-sdk/react';
+import { ChatStatistics, UserActivity, MessageHistory, VoteAnalytics, ChatVisibility } from './analytics';
+import { cn } from '@/lib/utils';
+import { Weather } from './weather';
+import { DocumentPreview } from './document-preview';
 
 interface MessagesProps {
   chatId: string;
@@ -16,6 +20,7 @@ interface MessagesProps {
   reload: UseChatHelpers['reload'];
   isReadonly: boolean;
   isArtifactVisible: boolean;
+  append: UseChatHelpers['append'];
 }
 
 function PureMessages({
@@ -26,6 +31,7 @@ function PureMessages({
   setMessages,
   reload,
   isReadonly,
+  append,
 }: MessagesProps) {
   const [messagesContainerRef, messagesEndRef] =
     useScrollToBottom<HTMLDivElement>();
@@ -67,13 +73,11 @@ function PureMessages({
 }
 
 export const Messages = memo(PureMessages, (prevProps, nextProps) => {
-  if (prevProps.isArtifactVisible && nextProps.isArtifactVisible) return true;
-
-  if (prevProps.status !== nextProps.status) return false;
-  if (prevProps.status && nextProps.status) return false;
   if (prevProps.messages.length !== nextProps.messages.length) return false;
-  if (!equal(prevProps.messages, nextProps.messages)) return false;
+  if (prevProps.status !== nextProps.status) return false;
   if (!equal(prevProps.votes, nextProps.votes)) return false;
+  if (prevProps.isReadonly !== nextProps.isReadonly) return false;
+  if (prevProps.isArtifactVisible !== nextProps.isArtifactVisible) return false;
 
   return true;
 });

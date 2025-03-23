@@ -4,6 +4,9 @@ import {
   createDataStreamResponse,
   smoothStream,
   streamText,
+  tool,
+  jsonSchema,
+  ToolExecutionOptions,
 } from 'ai';
 import { auth } from '@/app/(auth)/auth';
 import { systemPrompt } from '@/lib/ai/prompts';
@@ -25,8 +28,69 @@ import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
 import { getWeather } from '@/lib/ai/tools/get-weather';
 import { isProductionEnvironment } from '@/lib/constants';
 import { myProvider } from '@/lib/ai/providers';
+import { db } from '@/lib/db';
+import { sql } from 'drizzle-orm';
 
 export const maxDuration = 60;
+
+const mcp_postgres_local_query = tool({
+  description: 'Execute a read-only SQL query against the database to get statistics',
+  parameters: jsonSchema({
+    type: 'object',
+    properties: {
+      sql: {
+        type: 'string',
+        description: 'The SQL query to execute'
+      },
+      type: {
+        type: 'string',
+        description: 'The type of analytics query being executed',
+        enum: ['chat_statistics', 'user_activity', 'message_history', 'vote_analytics', 'chat_visibility']
+      }
+    },
+    required: ['sql', 'type']
+  }),
+  execute: async (args: unknown, options: ToolExecutionOptions) => {
+    console.log('MCP Tool Call - Starting execution with args:', args);
+    
+    try {
+      const { sql: query, type } = args as { sql: string; type: string };
+      console.log('MCP Tool Call - Parsed arguments:', { query, type });
+
+      // Basic SQL injection prevention
+      if (query.toLowerCase().includes('drop') || 
+          query.toLowerCase().includes('delete') || 
+          query.toLowerCase().includes('truncate') ||
+          query.toLowerCase().includes('alter')) {
+        console.log('MCP Tool Call - SQL injection attempt detected:', query);
+        throw new Error('Operation not allowed');
+      }
+
+      console.log('MCP Tool Call - Executing SQL query:', query);
+      // Execute the query using prepared statement
+      const result = await db.execute(sql.raw(query));
+      console.log('MCP Tool Call - Raw SQL result:', result);
+      
+      // Transform the first row into the expected format
+      const formattedData = result[0] || {};
+      console.log('MCP Tool Call - Formatted data:', formattedData);
+      
+      const response = {
+        rows: formattedData,
+        type
+      };
+      console.log('MCP Tool Call - Final response:', response);
+      return response;
+    } catch (error: unknown) {
+      console.error('MCP Tool Call - Error:', {
+        error,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      throw new Error(error instanceof Error ? error.message : 'Unknown error');
+    }
+  },
+});
 
 export async function POST(request: Request) {
   try {
@@ -94,6 +158,7 @@ export async function POST(request: Request) {
                   'createDocument',
                   'updateDocument',
                   'requestSuggestions',
+                  'mcp_postgres_local_query'
                 ],
           experimental_transform: smoothStream({ chunking: 'word' }),
           experimental_generateMessageId: generateUUID,
@@ -105,6 +170,7 @@ export async function POST(request: Request) {
               session,
               dataStream,
             }),
+            mcp_postgres_local_query,
           },
           onFinish: async ({ response }) => {
             if (session.user?.id) {
@@ -137,8 +203,8 @@ export async function POST(request: Request) {
                     },
                   ],
                 });
-              } catch (_) {
-                console.error('Failed to save chat');
+              } catch (error) {
+                console.error('Failed to save chat:', error);
               }
             }
           },
@@ -154,14 +220,18 @@ export async function POST(request: Request) {
           sendReasoning: true,
         });
       },
-      onError: () => {
-        return 'Oops, an error occured!';
+      onError: (error) => {
+        console.error('Stream Error:', {
+          error,
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined
+        });
+        return 'Oops, an error occurred!';
       },
     });
-  } catch (error) {
-    return new Response('An error occurred while processing your request!', {
-      status: 404,
-    });
+  } catch (error: unknown) {
+    console.error(error);
+    return new Response('Internal Server Error', { status: 500 });
   }
 }
 
