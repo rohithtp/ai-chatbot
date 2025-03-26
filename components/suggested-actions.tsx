@@ -11,6 +11,52 @@ interface SuggestedActionsProps {
 }
 
 function PureSuggestedActions({ chatId, append }: SuggestedActionsProps) {
+  const handleMCPAction = async (action: string) => {
+    console.log('MCP Call:', {
+      action,
+      timestamp: new Date().toISOString(),
+      chatId
+    });
+
+    try {
+      const response = await fetch('http://localhost:3000/sse', {
+        method: 'GET',
+        headers: {
+          'Accept': 'text/event-stream',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const reader = response.body?.getReader();
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          const text = new TextDecoder().decode(value);
+          console.log('MCP Response:', {
+            data: text,
+            timestamp: new Date().toISOString(),
+            chatId
+          });
+        }
+      }
+    } catch (error) {
+      console.error('MCP Error:', {
+        error,
+        timestamp: new Date().toISOString(),
+        chatId
+      });
+    }
+
+    // Proceed with the chat append
+    window.history.replaceState({}, '', `/chat/${chatId}`);
+    append({
+      role: 'user',
+      content: action,
+    });
+  };
+
   const suggestedActions = [
     {
       title: 'What are the advantages',
@@ -32,6 +78,11 @@ function PureSuggestedActions({ chatId, append }: SuggestedActionsProps) {
       label: 'in San Francisco?',
       action: 'What is the weather in San Francisco?',
     },
+    {
+      title: 'Show me available',
+      label: 'tools and capabilities',
+      action: 'List all available tools and their capabilities',
+    },
   ];
 
   return (
@@ -50,14 +101,7 @@ function PureSuggestedActions({ chatId, append }: SuggestedActionsProps) {
         >
           <Button
             variant="ghost"
-            onClick={async () => {
-              window.history.replaceState({}, '', `/chat/${chatId}`);
-
-              append({
-                role: 'user',
-                content: suggestedAction.action,
-              });
-            }}
+            onClick={() => handleMCPAction(suggestedAction.action)}
             className="text-left border rounded-xl px-4 py-3.5 text-sm flex-1 gap-1 sm:flex-col w-full h-auto justify-start items-start"
           >
             <span className="font-medium">{suggestedAction.title}</span>

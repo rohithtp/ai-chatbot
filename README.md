@@ -53,9 +53,34 @@ You will need to use the environment variables [defined in `.env.example`](.env.
 2. Link local instance with Vercel and GitHub accounts (creates `.vercel` directory): `vercel link`
 3. Download your environment variables: `vercel env pull`
 
+# Environment Variables
+
+The following environment variables are required for the application to function properly:
+
+## MCP (Model Context Protocol) Configuration
+```MCP_SSE_URL```
+- **Description**: The URL for the Model Context Protocol SSE (Server-Sent Events) endpoint
+- **Default**: `https://mcp-on-vercel.vercel.app/sse`
+- **Example**: 
+  ```
+  # Production
+  MCP_SSE_URL=https://mcp-on-vercel.vercel.app/sse
+
+  # Local Development
+  MCP_SSE_URL=http://localhost:3000/sse
+  ```
+
+### Setting Up Environment Variables
+
+1. Create a `.env.local` file in the root directory of the project
+2. Copy the variables from `.env.example` (if it exists) or add them manually
+3. Update the values according to your environment
+
+For deployment:
+- When deploying to Vercel or similar platforms, add these environment variables in your project settings
+- Make sure to keep `.env.local` in your `.gitignore` to prevent committing sensitive information
+
 ```bash
 pnpm install
 pnpm dev
 ```
-
-Your app template should now be running on [localhost:3000](http://localhost:3000/).
