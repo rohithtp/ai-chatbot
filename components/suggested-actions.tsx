@@ -4,43 +4,51 @@ import { motion } from 'framer-motion';
 import { Button } from './ui/button';
 import { memo } from 'react';
 import { UseChatHelpers } from '@ai-sdk/react';
+import { tool } from 'ai';
+import { z } from 'zod';
+
+// Use environment variables for server configuration
+const MCP_ORIGIN = process.env.MCP_ORIGIN || 'http://localhost:3000';
+const MCP_SSE_URL = new URL('/sse', MCP_ORIGIN).toString();
 
 interface SuggestedActionsProps {
   chatId: string;
   append: UseChatHelpers['append'];
 }
 
-function PureSuggestedActions({ chatId, append }: SuggestedActionsProps) {
-  const handleMCPAction = async (action: string) => {
-    console.log('MCP Call:', {
-      action,
-      timestamp: new Date().toISOString(),
-      chatId
-    });
-
+const listMCPTools = tool({
+  description: 'List all available MCP tools and their capabilities',
+  parameters: z.object({
+    chatId: z.string().describe('The chat ID to associate with the tools request'),
+  }),
+  execute: async ({ chatId }, { toolCallId, messages, abortSignal }) => {
     try {
-      const response = await fetch('http://localhost:3000/sse', {
-        method: 'GET',
-        headers: {
-          'Accept': 'text/event-stream',
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await fetch('/api/suggestions/tools', { signal: abortSignal });
+      const tools = await response.json();
+      return {
+        tools,
+        chatId,
+        toolCallId,
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Failed to fetch MCP tools:', error);
+      throw error;
+    }
+  },
+});
 
-      const reader = response.body?.getReader();
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          
-          const text = new TextDecoder().decode(value);
-          console.log('MCP Response:', {
-            data: text,
-            timestamp: new Date().toISOString(),
-            chatId
-          });
-        }
-      }
+function PureSuggestedActions({ chatId, append }: SuggestedActionsProps) {
+  console.log('Rendering SuggestedActions with:', { chatId, MCP_SSE_URL });
+
+  const handleMCPAction = async (action: string) => {
+    try {
+      console.log('Button clicked - Starting handleMCPAction');
+      console.log('Action received:', action);
+
+      const result = await listMCPTools.execute({ chatId }, { toolCallId: 'mcp-tools', messages: [], abortSignal: undefined });
+      console.log('MCP Tools Response:', result);
+
     } catch (error) {
       console.error('MCP Error:', {
         error,
@@ -57,27 +65,8 @@ function PureSuggestedActions({ chatId, append }: SuggestedActionsProps) {
     });
   };
 
+  // Uncomment other suggested actions for testing
   const suggestedActions = [
-    {
-      title: 'What are the advantages',
-      label: 'of using Next.js?',
-      action: 'What are the advantages of using Next.js?',
-    },
-    {
-      title: 'Write code to',
-      label: `demonstrate djikstra's algorithm`,
-      action: `Write code to demonstrate djikstra's algorithm`,
-    },
-    {
-      title: 'Help me write an essay',
-      label: `about silicon valley`,
-      action: `Help me write an essay about silicon valley`,
-    },
-    {
-      title: 'What is the weather',
-      label: 'in San Francisco?',
-      action: 'What is the weather in San Francisco?',
-    },
     {
       title: 'Show me available',
       label: 'tools and capabilities',

@@ -53,6 +53,15 @@ function PureMultimodalInput({
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
+
+  console.log('MultimodalInput render:', {
+    messagesLength: messages.length,
+    attachmentsLength: attachments.length,
+    uploadQueueLength: uploadQueue.length,
+    shouldShowSuggestedActions: messages.length === 0 && attachments.length === 0 && uploadQueue.length === 0
+  });
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -99,9 +108,6 @@ function PureMultimodalInput({
     setInput(event.target.value);
     adjustHeight();
   };
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
 
   const submitForm = useCallback(() => {
     window.history.replaceState({}, '', `/chat/${chatId}`);
