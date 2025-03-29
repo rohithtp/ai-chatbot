@@ -1,3 +1,4 @@
+// Requires React 18.2.0 for stable component rendering and type support
 'use client';
 
 import { motion } from 'framer-motion';
