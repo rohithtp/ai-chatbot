@@ -1,9 +1,9 @@
 'use client';
 import { ChevronUp } from 'lucide-react';
-import Image from 'next/image';
 import type { User } from 'next-auth';
 import { signOut } from 'next-auth/react';
 import { useTheme } from 'next-themes';
+import Avatar from 'boring-avatars';
 
 import {
   DropdownMenu,
@@ -27,13 +27,14 @@ export function SidebarUserNav({ user }: { user: User }) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton className="data-[state=open]:bg-sidebar-accent bg-background data-[state=open]:text-sidebar-accent-foreground h-10">
-              <Image
-                src={`https://avatar.vercel.sh/${user.email}`}
-                alt={user.email ?? 'User Avatar'}
-                width={24}
-                height={24}
-                className="rounded-full"
-              />
+              <div className="size-6">
+                <Avatar
+                  size={24}
+                  name={user.email ?? 'Anonymous User'}
+                  variant="beam"
+                  colors={['#92A1C6', '#146A7C', '#F0AB3D', '#C271B4', '#C20D90']}
+                />
+              </div>
               <span className="truncate">{user?.email}</span>
               <ChevronUp className="ml-auto" />
             </SidebarMenuButton>
