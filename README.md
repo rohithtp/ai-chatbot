@@ -49,11 +49,10 @@ You will need to use the environment variables [defined in `.env.example`](.env.
 
 > Note: You should not commit your `.env` file or it will expose secrets that will allow others to control access to your various AI and authentication provider accounts.
 
-1. Clone the repository with submodules:
+1. Clone the repository:
    ```bash
-   git clone --recursive https://github.com/your-username/ai-chatbot.git
-   # Or if already cloned without --recursive:
-   git submodule update --init --recursive
+   git clone https://github.com/your-username/ai-chatbot.git
+   cd ai-chatbot
    ```
 
 2. Install Vercel CLI: `npm i -g vercel`
@@ -69,19 +68,43 @@ Your app template should now be running on [localhost:3000](http://localhost:300
 
 ### Python MCP Module
 
-The project includes a Python submodule located in `python_modules/my_mcp_module`. To work with the Python module:
+The project includes a Python module for MCP (Model Control Protocol) integration located in `python_modules/my_mcp_module`. To work with the Python module:
 
-1. Navigate to the module directory:
+1. Install `uv` (fast Python package installer):
    ```bash
-   cd python_modules/my_mcp_module
+   # On macOS/Linux using Homebrew
+   brew install uv
+   # Using pip
+   pip install uv
    ```
 
-2. Activate the virtual environment:
+2. Create and activate a virtual environment:
    ```bash
+   # Create new virtual environment
+   uv venv .venv
+   
+   # Activate the environment
+   # On macOS/Linux:
    source .venv/bin/activate
+   # On Windows:
+   .venv\Scripts\activate
    ```
 
-3. The module uses `uv` for package management. Install dependencies:
+3. Install dependencies:
    ```bash
-   uv pip install -e .
+   # For basic usage (install only required packages)
+   uv pip install -r python_modules/my_mcp_module/requirements.txt
+
+   # For development (install all development tools)
+   uv pip install -r python_modules/my_mcp_module/requirements-dev.txt
+
+   # Install the module in editable mode
+   uv pip install -e python_modules/my_mcp_module
    ```
+
+4. Run tests:
+   ```bash
+   python test_mcp_client.py
+   ```
+
+For detailed testing instructions and troubleshooting, see [Testing MCP Client](docs/testing_mcp_client.md).
