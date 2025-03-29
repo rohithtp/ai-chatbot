@@ -1,0 +1,3 @@
+[submodule "python_modules/my_mcp_module"]
+    path = python_modules/my_mcp_module
+    url = ./python_modules/my_mcp_module 
