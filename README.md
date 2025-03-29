@@ -49,9 +49,16 @@ You will need to use the environment variables [defined in `.env.example`](.env.
 
 > Note: You should not commit your `.env` file or it will expose secrets that will allow others to control access to your various AI and authentication provider accounts.
 
-1. Install Vercel CLI: `npm i -g vercel`
-2. Link local instance with Vercel and GitHub accounts (creates `.vercel` directory): `vercel link`
-3. Download your environment variables: `vercel env pull`
+1. Clone the repository with submodules:
+   ```bash
+   git clone --recursive https://github.com/your-username/ai-chatbot.git
+   # Or if already cloned without --recursive:
+   git submodule update --init --recursive
+   ```
+
+2. Install Vercel CLI: `npm i -g vercel`
+3. Link local instance with Vercel and GitHub accounts (creates `.vercel` directory): `vercel link`
+4. Download your environment variables: `vercel env pull`
 
 ```bash
 pnpm install
@@ -59,3 +66,22 @@ pnpm dev
 ```
 
 Your app template should now be running on [localhost:3000](http://localhost:3000/).
+
+### Python MCP Module
+
+The project includes a Python submodule located in `python_modules/my_mcp_module`. To work with the Python module:
+
+1. Navigate to the module directory:
+   ```bash
+   cd python_modules/my_mcp_module
+   ```
+
+2. Activate the virtual environment:
+   ```bash
+   source .venv/bin/activate
+   ```
+
+3. The module uses `uv` for package management. Install dependencies:
+   ```bash
+   uv pip install -e .
+   ```
