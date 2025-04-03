@@ -24,7 +24,15 @@ import { ArtifactKind } from '@/components/artifact';
 // https://authjs.dev/reference/adapter/drizzle
 
 // biome-ignore lint: Forbidden non-null assertion.
-const client = postgres(process.env.POSTGRES_URL!);
+const client = postgres({
+  host: process.env.POSTGRES_HOST,
+  port: Number(process.env.POSTGRES_PORT),
+  database: process.env.POSTGRES_DB,
+  username: process.env.POSTGRES_USER,
+  password: process.env.POSTGRES_PASSWORD,
+  ssl: process.env.POSTGRES_SSL === 'true',
+  max: Number(process.env.POSTGRES_MAX_CONNECTIONS),
+});
 const db = drizzle(client);
 
 export async function getUser(email: string): Promise<Array<User>> {

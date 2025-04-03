@@ -8,11 +8,21 @@ config({
 });
 
 const runMigrate = async () => {
-  if (!process.env.POSTGRES_URL) {
-    throw new Error('POSTGRES_URL is not defined');
+  if (!process.env.POSTGRES_HOST || !process.env.POSTGRES_DB) {
+    throw new Error('Database configuration is not defined');
   }
 
-  const connection = postgres(process.env.POSTGRES_URL, { max: 1 });
+  const connection = postgres({
+    host: process.env.POSTGRES_HOST,
+    port: Number(process.env.POSTGRES_PORT),
+    database: process.env.POSTGRES_DB,
+    username: process.env.POSTGRES_USER,
+    password: process.env.POSTGRES_PASSWORD,
+    ssl: process.env.POSTGRES_SSL === 'true',
+    max: Number(process.env.POSTGRES_MAX_CONNECTIONS),
+    idle_timeout: 20,
+    connect_timeout: 10,
+  });
   const db = drizzle(connection);
 
   console.log('⏳ Running migrations...');
