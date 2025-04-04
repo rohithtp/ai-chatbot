@@ -3,35 +3,51 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useWindowSize } from 'usehooks-ts';
-
+import { memo } from 'react';
 import { ModelSelector } from '@/components/model-selector';
 import { SidebarToggle } from '@/components/sidebar-toggle';
 import { Button } from '@/components/ui/button';
 import { PlusIcon, VercelIcon } from './icons';
 import { useSidebar } from './ui/sidebar';
-import { memo } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { type VisibilityType, VisibilitySelector } from './visibility-selector';
+
+interface ChatHeaderProps {
+  chatId: string;
+  selectedModelId: string;
+  selectedVisibilityType: VisibilityType;
+  isReadonly: boolean;
+  isConnected: boolean;
+}
 
 function PureChatHeader({
   chatId,
   selectedModelId,
   selectedVisibilityType,
   isReadonly,
-}: {
-  chatId: string;
-  selectedModelId: string;
-  selectedVisibilityType: VisibilityType;
-  isReadonly: boolean;
-}) {
+  isConnected,
+}: ChatHeaderProps) {
   const router = useRouter();
   const { open } = useSidebar();
-
   const { width: windowWidth } = useWindowSize();
 
   return (
     <header className="flex sticky top-0 bg-background py-1.5 items-center px-2 md:px-2 gap-2">
       <SidebarToggle />
+
+      <div className="flex items-center gap-2">
+        {isConnected ? (
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-green-500" />
+            <span className="text-sm text-muted-foreground">MCP Connected</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-red-500" />
+            <span className="text-sm text-muted-foreground">MCP Disconnected</span>
+          </div>
+        )}
+      </div>
 
       {(!open || windowWidth < 768) && (
         <Tooltip>
@@ -84,5 +100,8 @@ function PureChatHeader({
 }
 
 export const ChatHeader = memo(PureChatHeader, (prevProps, nextProps) => {
-  return prevProps.selectedModelId === nextProps.selectedModelId;
+  return (
+    prevProps.selectedModelId === nextProps.selectedModelId &&
+    prevProps.isConnected === nextProps.isConnected
+  );
 });

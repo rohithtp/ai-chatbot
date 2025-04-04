@@ -2,7 +2,7 @@
 
 import type { Attachment, UIMessage } from 'ai';
 import { useChat } from '@ai-sdk/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useSWR, { useSWRConfig } from 'swr';
 import { ChatHeader } from '@/components/chat-header';
 import type { Vote } from '@/lib/db/schema';
@@ -15,6 +15,7 @@ import { useArtifactSelector } from '@/hooks/use-artifact';
 import { toast } from 'sonner';
 import { unstable_serialize } from 'swr/infinite';
 import { getChatHistoryPaginationKey } from './sidebar-history';
+import { useMCP } from '@/hooks/use-mcp';
 
 export function Chat({
   id,
@@ -30,6 +31,7 @@ export function Chat({
   isReadonly: boolean;
 }) {
   const { mutate } = useSWRConfig();
+  const { isConnected, lastMessage, getMetrics } = useMCP();
 
   const {
     messages,
@@ -48,11 +50,32 @@ export function Chat({
     experimental_throttle: 100,
     sendExtraMessageFields: true,
     generateId: generateUUID,
-    onFinish: () => {
+    onFinish: async (message) => {
       mutate(unstable_serialize(getChatHistoryPaginationKey));
+      
+      // If the message contains a metrics request, send it to MCP
+      if (message.content.toLowerCase().includes('metrics')) {
+        try {
+          const metricsResult = await getMetrics(message.content);
+          if (metricsResult.data) {
+            append({
+              id: generateUUID(),
+              content: `Metrics result: ${JSON.stringify(metricsResult.data, null, 2)}`,
+              role: 'assistant'
+            });
+          }
+        } catch (error) {
+          console.error('Error getting metrics:', error);
+          append({
+            id: generateUUID(),
+            content: 'Sorry, there was an error retrieving metrics.',
+            role: 'assistant'
+          });
+        }
+      }
     },
     onError: () => {
-      toast.error('An error occured, please try again!');
+      toast.error('An error occurred, please try again!');
     },
   });
 
@@ -64,6 +87,17 @@ export function Chat({
   const [attachments, setAttachments] = useState<Array<Attachment>>([]);
   const isArtifactVisible = useArtifactSelector((state) => state.isVisible);
 
+  // Handle incoming MCP messages
+  useEffect(() => {
+    if (lastMessage && lastMessage.type === 'metrics_update') {
+      append({
+        id: generateUUID(),
+        content: `Metrics update received: ${JSON.stringify(lastMessage.data, null, 2)}`,
+        role: 'assistant'
+      });
+    }
+  }, [lastMessage, append]);
+
   return (
     <>
       <div className="flex flex-col min-w-0 h-dvh bg-background">
@@ -72,6 +106,7 @@ export function Chat({
           selectedModelId={selectedChatModel}
           selectedVisibilityType={selectedVisibilityType}
           isReadonly={isReadonly}
+          isConnected={isConnected}
         />
 
         <Messages
