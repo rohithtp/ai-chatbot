@@ -2,7 +2,7 @@
 
 import type { Attachment, Message } from 'ai';
 import { useChat } from 'ai/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useSWR, { useSWRConfig } from 'swr';
 
 import { ChatHeader } from '@/components/chat-header';
@@ -12,9 +12,10 @@ import { fetcher, generateUUID } from '@/lib/utils';
 import { Artifact } from './artifact';
 import { MultimodalInput } from './multimodal-input';
 import { Messages } from './messages';
-import { VisibilityType } from './visibility-selector';
+import type { VisibilityType } from './visibility-selector';
 import { useArtifactSelector } from '@/hooks/use-artifact';
 import { toast } from 'sonner';
+import { useMCP } from '@/hooks/use-mcp';
 
 export function Chat({
   id,
@@ -30,6 +31,7 @@ export function Chat({
   isReadonly: boolean;
 }) {
   const { mutate } = useSWRConfig();
+  const { messages: mcpMessages, getMetrics } = useMCP();
 
   const {
     messages,
@@ -48,11 +50,18 @@ export function Chat({
     experimental_throttle: 100,
     sendExtraMessageFields: true,
     generateId: generateUUID,
-    onFinish: () => {
+    onFinish: async (message) => {
       mutate('/api/history');
+      // Get metrics for the completed conversation
+      try {
+        const metrics = await getMetrics(message.content);
+        console.log('Chat metrics:', metrics);
+      } catch (error) {
+        console.error('Failed to get metrics:', error);
+      }
     },
     onError: (error) => {
-      toast.error('An error occured, please try again!');
+      toast.error('An error occurred, please try again!');
     },
   });
 
@@ -63,6 +72,14 @@ export function Chat({
 
   const [attachments, setAttachments] = useState<Array<Attachment>>([]);
   const isArtifactVisible = useArtifactSelector((state) => state.isVisible);
+
+  // Add effect to monitor MCP messages
+  useEffect(() => {
+    if (mcpMessages.length > 0) {
+      const latestMessage = mcpMessages[mcpMessages.length - 1];
+      console.log('Received MCP message:', latestMessage);
+    }
+  }, [mcpMessages]);
 
   return (
     <>
