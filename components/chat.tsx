@@ -61,7 +61,8 @@ export function Chat({
       }
     },
     onError: (error) => {
-      toast.error('An error occurred, please try again!');
+      console.error('Error in chat:', error);
+      toast.warning('An warning has occurred, please check the console for more details!');
     },
   });
 

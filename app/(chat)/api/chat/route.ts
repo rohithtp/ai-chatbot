@@ -48,6 +48,7 @@ export async function POST(request: Request) {
     return new Response('No user message found', { status: 400 });
   }
 
+  // Save user message first
   const chat = await getChatById({ id });
 
   if (!chat) {
@@ -59,71 +60,161 @@ export async function POST(request: Request) {
     messages: [{ ...userMessage, createdAt: new Date(), chatId: id }],
   });
 
+  // Create data stream for response
   return createDataStreamResponse({
-    execute: (dataStream) => {
-      const result = streamText({
-        model: myProvider.languageModel(selectedChatModel),
-        system: systemPrompt({ selectedChatModel }),
-        messages,
-        maxSteps: 5,
-        experimental_activeTools:
-          selectedChatModel === 'chat-model-reasoning'
-            ? []
-            : [
-                'getWeather',
-                'createDocument',
-                'updateDocument',
-                'requestSuggestions',
-              ],
-        experimental_transform: smoothStream({ chunking: 'word' }),
-        experimental_generateMessageId: generateUUID,
-        tools: {
-          getWeather,
-          createDocument: createDocument({ session, dataStream }),
-          updateDocument: updateDocument({ session, dataStream }),
-          requestSuggestions: requestSuggestions({
-            session,
-            dataStream,
+    execute: async (dataStream) => {
+      try {
+        // Handle MCP metrics first, regardless of AI status
+        console.log('Starting chat request processing');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_MCP_ORIGIN}/mcp/messages`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type: 'request',
+            action: 'execute',
+            tool: 'get_metrics',
+            data: { question: userMessage.content }
           }),
-        },
-        onFinish: async ({ response, reasoning }) => {
-          if (session.user?.id) {
-            try {
-              const sanitizedResponseMessages = sanitizeResponseMessages({
-                messages: response.messages,
-                reasoning,
-              });
+        });
 
-              await saveMessages({
-                messages: sanitizedResponseMessages.map((message) => {
-                  return {
-                    id: message.id,
-                    chatId: id,
-                    role: message.role,
-                    content: message.content,
-                    createdAt: new Date(),
-                  };
-                }),
-              });
-            } catch (error) {
-              console.error('Failed to save chat');
-            }
+        if (!response.ok) {
+          console.error('MCP metrics call failed:', response.statusText);
+        } else {
+          console.log('MCP metrics call successful');
+        }
+
+        // Check if AI messages are enabled
+        const isAIMessagesEnabled = process.env.ENABLE_AI_MESSAGES !== 'false';
+        console.log('AI messages enabled:', isAIMessagesEnabled);
+
+        if (!isAIMessagesEnabled) {
+          console.log('AI messages disabled, sending warning message');
+          const warningMessage = {
+            id: generateUUID(),
+            role: 'assistant',
+            content: '⚠️ AI message generation is currently disabled. Your message has been logged but no AI response will be generated.',
+            createdAt: new Date(),
+          };
+          
+          try {
+            // Send initial response with user message
+            dataStream.write(`2:${JSON.stringify({
+              messages: [{
+                id: userMessage.id,
+                role: userMessage.role,
+                content: userMessage.content,
+                createdAt: new Date()
+              }]
+            })}\n`);
+            console.log('Sent user message');
+            
+            // Send warning message
+            dataStream.write(`2:${JSON.stringify({
+              messages: [{
+                id: warningMessage.id,
+                role: warningMessage.role,
+                content: warningMessage.content,
+                createdAt: warningMessage.createdAt
+              }]
+            })}\n`);
+            console.log('Sent warning message');
+            
+            // Send final response with both messages
+            dataStream.write(`3:${JSON.stringify({
+              messages: [
+                {
+                  id: userMessage.id,
+                  role: userMessage.role,
+                  content: userMessage.content,
+                  createdAt: new Date()
+                },
+                {
+                  id: warningMessage.id,
+                  role: warningMessage.role,
+                  content: warningMessage.content,
+                  createdAt: warningMessage.createdAt
+                }
+              ],
+              done: true
+            })}\n`);
+            console.log('Sent completion response');
+            return;
+          } catch (streamError) {
+            console.error('Error writing to data stream:', streamError);
+            throw streamError;
           }
-        },
-        experimental_telemetry: {
-          isEnabled: true,
-          functionId: 'stream-text',
-        },
-      });
+        }
 
-      result.consumeStream();
+        console.log('Proceeding with AI response');
+        const result = streamText({
+          model: myProvider.languageModel(selectedChatModel),
+          system: systemPrompt({ selectedChatModel }),
+          messages,
+          maxSteps: 5,
+          experimental_activeTools:
+            selectedChatModel === 'chat-model-reasoning'
+              ? []
+              : [
+                  'getWeather',
+                  'createDocument',
+                  'updateDocument',
+                  'requestSuggestions',
+                ],
+          experimental_transform: smoothStream({ chunking: 'word' }),
+          experimental_generateMessageId: generateUUID,
+          tools: {
+            getWeather,
+            createDocument: createDocument({ session, dataStream }),
+            updateDocument: updateDocument({ session, dataStream }),
+            requestSuggestions: requestSuggestions({
+              session,
+              dataStream,
+            }),
+          },
+          onFinish: async ({ response, reasoning }) => {
+            if (session.user?.id) {
+              try {
+                const sanitizedResponseMessages = sanitizeResponseMessages({
+                  messages: response.messages,
+                  reasoning,
+                });
 
-      result.mergeIntoDataStream(dataStream, {
-        sendReasoning: true,
-      });
+                await saveMessages({
+                  messages: sanitizedResponseMessages.map((message) => {
+                    return {
+                      id: message.id,
+                      chatId: id,
+                      role: message.role,
+                      content: message.content,
+                      createdAt: new Date(),
+                    };
+                  }),
+                });
+              } catch (error) {
+                console.error('Failed to save chat');
+              }
+            }
+          },
+          experimental_telemetry: {
+            isEnabled: true,
+            functionId: 'stream-text',
+          },
+        });
+
+        result.consumeStream();
+
+        result.mergeIntoDataStream(dataStream, {
+          sendReasoning: true,
+        });
+      } catch (error) {
+        console.error('Error in chat stream:', error);
+        dataStream.write(`0:${JSON.stringify({ type: 'error', error: 'An error occurred processing your request' })}\n`);
+      }
     },
     onError: () => {
-      return 'Oops, an error occured!';
+      return 'Oops, an error occurred!';
     },
   });
 }
