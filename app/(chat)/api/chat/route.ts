@@ -25,6 +25,7 @@ import { createDocument } from '@/lib/ai/tools/create-document';
 import { updateDocument } from '@/lib/ai/tools/update-document';
 import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
 import { getWeather } from '@/lib/ai/tools/get-weather';
+import { getUsers } from '@/lib/ai/tools/get-users';
 
 export const maxDuration = 60;
 
@@ -71,6 +72,7 @@ export async function POST(request: Request) {
             ? []
             : [
                 'getWeather',
+                'getUsers',
                 'createDocument',
                 'updateDocument',
                 'requestSuggestions',
@@ -79,6 +81,7 @@ export async function POST(request: Request) {
         experimental_generateMessageId: generateUUID,
         tools: {
           getWeather,
+          getUsers,
           createDocument: createDocument({ session, dataStream }),
           updateDocument: updateDocument({ session, dataStream }),
           requestSuggestions: requestSuggestions({

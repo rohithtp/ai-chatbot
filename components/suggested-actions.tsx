@@ -2,8 +2,9 @@
 
 import { motion } from 'framer-motion';
 import { Button } from './ui/button';
-import { ChatRequestOptions, CreateMessage, Message } from 'ai';
+import type { ChatRequestOptions, CreateMessage, Message } from 'ai';
 import { memo } from 'react';
+import { UserList } from './user-list';
 
 interface SuggestedActionsProps {
   chatId: string;
@@ -34,6 +35,11 @@ function PureSuggestedActions({ chatId, append }: SuggestedActionsProps) {
       title: 'What is the weather',
       label: 'in San Francisco?',
       action: 'What is the weather in San Francisco?',
+    },
+    {
+      title: 'Show me the user list',
+      label: 'Display all users',
+      action: 'Show me the user list',
     },
   ];
 
