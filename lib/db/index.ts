@@ -1,6 +1,6 @@
 import { createClient } from '@libsql/client';
 import { drizzle } from 'drizzle-orm/libsql';
-import * as path from 'path';
+import * as path from 'node:path';
 
 const client = createClient({
   url: `file:${path.join(process.cwd(), 'sqlite.db')}`,

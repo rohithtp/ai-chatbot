@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { Button } from './ui/button';
 import type { ChatRequestOptions, CreateMessage, Message } from 'ai';
 import { memo } from 'react';
-import { UserList } from './user-list';
 
 interface SuggestedActionsProps {
   chatId: string;

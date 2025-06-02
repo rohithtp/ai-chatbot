@@ -4,7 +4,7 @@ import { genSaltSync, hashSync } from 'bcrypt-ts';
 import { drizzle } from 'drizzle-orm/libsql';
 import { and, asc, desc, eq, gt, gte, inArray } from 'drizzle-orm';
 import { createClient } from '@libsql/client';
-import * as path from 'path';
+import * as path from 'node:path';
 import { nanoid } from 'nanoid';
 
 import {
@@ -18,7 +18,7 @@ import {
   message,
   vote,
 } from './schema';
-import { ArtifactKind } from '@/components/artifact';
+import type { ArtifactKind } from '@/components/artifact';
 
 const client = createClient({
   url: `file:${path.join(process.cwd(), 'sqlite.db')}`,
