@@ -31,7 +31,7 @@ export const maxDuration = 60;
 
 export async function POST(request: Request) {
   const body = await request.json();
-  console.log('Incoming request body:', body);
+  console.log('Incoming request body:', JSON.stringify(body, null, 2));
   const {
     id,
     messages,
@@ -45,12 +45,12 @@ export async function POST(request: Request) {
     return new Response(JSON.stringify({ error: 'No user message found' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
   }
 
-  // Stream the response from the external endpoint
+  // For non-streaming APIs, send only a text-delta event
   return createDataStreamResponse({
     execute: async (dataStream) => {
       try {
         const externalPayload = { query: userMessage.content };
-        console.log('Sending to external service:', externalPayload);
+        console.log('Sending to external service:', JSON.stringify(externalPayload, null, 2));
         const externalResponse = await fetch('http://localhost:8800/users/answer', {
           method: 'POST',
           headers: {
@@ -59,42 +59,19 @@ export async function POST(request: Request) {
           body: JSON.stringify(externalPayload),
         });
 
-        const reader = externalResponse.body?.getReader();
-        const decoder = new TextDecoder();
-        let done = false;
-        let buffer = '';
-        while (reader && !done) {
-          const { value, done: streamDone } = await reader.read();
-          done = streamDone;
-          if (value) {
-            const chunk = decoder.decode(value, { stream: !done });
-            buffer += chunk;
-            console.log('External service chunk:', chunk);
-            // Do not stream chunk yet, wait until buffer is complete
+        const responseText = await externalResponse.text();
+        console.log('Raw response from external service:', responseText);
+        let answer = responseText;
+        try {
+          const parsed = JSON.parse(responseText);
+          if (parsed.answer) {
+            answer = parsed.answer;
           }
+        } catch {
+          // Not JSON, just use the raw text
         }
-        // After streaming, process the buffer
-        if (buffer) {
-          try {
-            const parsed = JSON.parse(buffer);
-            if (parsed.answer) {
-              console.log('Parsed answer:', parsed.answer);
-              const answer = parsed.answer;
-              if (answer) {
-                for (const line of answer.split('\n')) {
-                  console.log('line :', line.trim());
-                  dataStream.writeData({ type: 'text-delta', content: `${line.trim()}\n` });
-                }
-              }
-            } else {
-              dataStream.writeData({ type: 'text-delta', content: buffer });
-            }
-          } catch {
-            dataStream.writeData({ type: 'text-delta', content: buffer });
-          }
-        }
-        console.log('Full response from external service:', buffer);
-        dataStream.writeData({ type: 'text-delta', content: '\n-- Feedback: This response is from the external service --\n' });
+        console.log('Sending assistant text-delta with content:', answer);
+        dataStream.writeData({ type: 'text-delta', content: answer });
         dataStream.writeData({ type: 'finish', content: '' });
       } catch (error: any) {
         console.error('Failed to contact external service', error?.stack || error);
@@ -104,6 +81,10 @@ export async function POST(request: Request) {
     },
     onError: () => {
       return 'Oops, an error occurred!';
+    },
+    headers: {
+      'Transfer-Encoding': 'chunked',
+      'Connection': 'keep-alive',
     },
   });
 }
