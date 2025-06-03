@@ -7,12 +7,12 @@ const ollama = createOllama({
   
 });
 
-export const DEFAULT_CHAT_MODEL: string = 'mistral-small:latest';
+export const DEFAULT_CHAT_MODEL: string = 'mistral:latest';
 
 export const myProvider = customProvider({
   languageModels: {
-    'mistral-small:latest': ollama('mistral-small:latest'),
-    'title-model': ollama('gemma2:9b'),
+    'mistral:latest': ollama('mistral:latest'),
+    'title-model': ollama('mistral:latest'),
   },
   imageModels: {},
 });
@@ -25,8 +25,8 @@ interface ChatModel {
 
 export const chatModels: Array<ChatModel> = [
   {
-    id: 'mistral-small:latest',
+    id: 'mistral:latest',
     name: 'mistral',
-    description: 'mistral small model for fast, lightweight tasks',
+    description: 'Mistral latest model for fast, lightweight tasks',
   },
 ];

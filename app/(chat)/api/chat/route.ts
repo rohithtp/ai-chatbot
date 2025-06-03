@@ -30,103 +30,80 @@ import { getUsers } from '@/lib/ai/tools/get-users';
 export const maxDuration = 60;
 
 export async function POST(request: Request) {
+  const body = await request.json();
+  console.log('Incoming request body:', body);
   const {
     id,
     messages,
     selectedChatModel,
-  }: { id: string; messages: Array<Message>; selectedChatModel: string } =
-    await request.json();
-
-  const session = await auth();
-
-  if (!session || !session.user || !session.user.id) {
-    return new Response('Unauthorized', { status: 401 });
-  }
+  }: { id: string; messages: Array<Message>; selectedChatModel: string } = body;
 
   const userMessage = getMostRecentUserMessage(messages);
 
   if (!userMessage) {
-    return new Response('No user message found', { status: 400 });
+    console.error('No user message found in messages:', messages);
+    return new Response(JSON.stringify({ error: 'No user message found' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
   }
 
-  const chat = await getChatById({ id });
-
-  if (!chat) {
-    const title = await generateTitleFromUserMessage({ message: userMessage });
-    await saveChat({ id, userId: session.user.id, title });
-  }
-
-  await saveMessages({
-    messages: [{ ...userMessage, createdAt: new Date(), chatId: id }],
-  });
-
+  // Stream the response from the external endpoint
   return createDataStreamResponse({
-    execute: (dataStream) => {
-      const result = streamText({
-        model: myProvider.languageModel(selectedChatModel),
-        system: systemPrompt({ selectedChatModel }),
-        messages,
-        maxSteps: 5,
-        experimental_activeTools:
-          selectedChatModel === 'chat-model-reasoning'
-            ? []
-            : [
-                'getWeather',
-                'getUsers',
-                'createDocument',
-                'updateDocument',
-                'requestSuggestions',
-              ],
-        experimental_transform: smoothStream({ chunking: 'word' }),
-        experimental_generateMessageId: generateUUID,
-        tools: {
-          getWeather,
-          getUsers,
-          createDocument: createDocument({ session, dataStream }),
-          updateDocument: updateDocument({ session, dataStream }),
-          requestSuggestions: requestSuggestions({
-            session,
-            dataStream,
-          }),
-        },
-        onFinish: async ({ response, reasoning }) => {
-          if (session.user?.id) {
-            try {
-              const sanitizedResponseMessages = sanitizeResponseMessages({
-                messages: response.messages,
-                reasoning,
-              });
+    execute: async (dataStream) => {
+      try {
+        const externalPayload = { query: userMessage.content };
+        console.log('Sending to external service:', externalPayload);
+        const externalResponse = await fetch('http://localhost:8800/users/answer', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(externalPayload),
+        });
 
-              await saveMessages({
-                messages: sanitizedResponseMessages.map((message) => {
-                  return {
-                    id: message.id,
-                    chatId: id,
-                    role: message.role,
-                    content: message.content,
-                    createdAt: new Date(),
-                  };
-                }),
-              });
-            } catch (error) {
-              console.error('Failed to save chat');
-            }
+        const reader = externalResponse.body?.getReader();
+        const decoder = new TextDecoder();
+        let done = false;
+        let buffer = '';
+        while (reader && !done) {
+          const { value, done: streamDone } = await reader.read();
+          done = streamDone;
+          if (value) {
+            const chunk = decoder.decode(value, { stream: !done });
+            buffer += chunk;
+            console.log('External service chunk:', chunk);
+            // Do not stream chunk yet, wait until buffer is complete
           }
-        },
-        experimental_telemetry: {
-          isEnabled: true,
-          functionId: 'stream-text',
-        },
-      });
-
-      result.consumeStream();
-
-      result.mergeIntoDataStream(dataStream, {
-        sendReasoning: true,
-      });
+        }
+        // After streaming, process the buffer
+        if (buffer) {
+          try {
+            const parsed = JSON.parse(buffer);
+            if (parsed.answer) {
+              console.log('Parsed answer:', parsed.answer);
+              const answer = parsed.answer;
+              if (answer) {
+                for (const line of answer.split('\n')) {
+                  console.log('line :', line.trim());
+                  dataStream.writeData({ type: 'text-delta', content: `${line.trim()}\n` });
+                }
+              }
+            } else {
+              dataStream.writeData({ type: 'text-delta', content: buffer });
+            }
+          } catch {
+            dataStream.writeData({ type: 'text-delta', content: buffer });
+          }
+        }
+        console.log('Full response from external service:', buffer);
+        dataStream.writeData({ type: 'text-delta', content: '\n-- Feedback: This response is from the external service --\n' });
+        dataStream.writeData({ type: 'finish', content: '' });
+      } catch (error: any) {
+        console.error('Failed to contact external service', error?.stack || error);
+        dataStream.writeData({ type: 'text-delta', content: 'Failed to contact external service.' });
+        dataStream.writeData({ type: 'finish', content: '' });
+      }
     },
     onError: () => {
-      return 'Oops, an error occured!';
+      return 'Oops, an error occurred!';
     },
   });
 }
