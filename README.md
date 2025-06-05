@@ -54,9 +54,52 @@ You will need to use the environment variables [defined in `.env.example`](.env.
 2. Link local instance with Vercel and GitHub accounts (creates `.vercel` directory): `vercel link`
 3. Download your environment variables: `vercel env pull`
 
+## Prerequisites
+
+- **Redis**: Required for resumable streams and chat functionality. Ensure you have a Redis instance running locally and set the `REDIS_URL` environment variable in your `.env` file.
+- **Postgres**: For data persistence (see `.env.example`).
+
+## API Usage
+
+### Chat Endpoint
+
+The main chat API expects a POST request with the following JSON body (see `app/(chat)/api/chat/schema.ts`):
+
+```jsonc
+{
+  "id": "<uuid>",
+  "message": {
+    "id": "<uuid>",
+    "createdAt": "<date>",
+    "role": "user",
+    "content": "<string>",
+    "parts": [
+      { "text": "<string>", "type": "text" }
+    ],
+    "experimental_attachments": [
+      { "url": "<url>", "name": "<string>", "contentType": "image/png|image/jpg|image/jpeg" }
+    ]
+  },
+  "selectedChatModel": "chat-model|chat-model-reasoning",
+  "selectedVisibilityType": "public|private"
+}
+```
+
+- `selectedChatModel` can be one of the supported models (see below).
+- `selectedVisibilityType` controls chat privacy.
+
+## Supported Models
+
+The following models are available (see `lib/ai/models.ts` and `lib/ai/providers.ts`):
+
+- `chat-model`: Primary model for all-purpose chat (default: OpenAI gpt-4o)
+- `chat-model-reasoning`: Model with advanced reasoning (default: OpenAI gpt-4o)
+- `title-model`: Used for generating chat titles (default: OpenAI gpt-4o)
+- `artifact-model`: Used for document/artifact generation (default: OpenAI gpt-4o)
+
+You can extend or swap providers in `lib/ai/providers.ts`.
+
 ```bash
 pnpm install
 pnpm dev
 ```
-
-Your app template should now be running on [localhost:3000](http://localhost:3000).
