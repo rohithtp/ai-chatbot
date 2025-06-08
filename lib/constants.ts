@@ -11,3 +11,5 @@ export const isTestEnvironment = Boolean(
 export const guestRegex = /^guest-\d+$/;
 
 export const DUMMY_PASSWORD = generateDummyPassword();
+
+export const USE_EXTERNAL_CHAT_API = false; // Feature flag for using external chat API
