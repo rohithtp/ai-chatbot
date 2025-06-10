@@ -99,6 +99,77 @@ The following models are available (see `lib/ai/models.ts` and `lib/ai/providers
 
 You can extend or swap providers in `lib/ai/providers.ts`.
 
+## External Chat API Refactor
+
+### Overview
+- Message generation logic has been moved to a new local API handler (`app/(chat)/api/chat/external-chat.ts`).
+- A feature flag (`USE_EXTERNAL_CHAT_API` in `lib/constants.ts`) controls whether to use the new external API handler or the legacy local logic.
+- All tool integrations (getWeather, createDocument, updateDocument, requestSuggestions) have been removed from the message generation logic.
+
+### How it works
+- When `USE_EXTERNAL_CHAT_API` is `false` (default):
+  - The chat API uses the legacy local message generation logic (no tools).
+- When `USE_EXTERNAL_CHAT_API` is `true`:
+  - The chat API delegates message generation to the new local handler (`getExternalChatResponse`).
+  - This handler can be easily moved to a remote/external API in the future.
+
+### How to switch
+- Edit `lib/constants.ts` and set `USE_EXTERNAL_CHAT_API` to `true` to use the new handler.
+- Set it to `false` to use the legacy logic.
+
+### Next steps
+- To move message generation to a remote/external API, replace the implementation of `getExternalChatResponse` with a `fetch` call to your external service.
+
+## Requirements for External Server API (for Chat Message Generation)
+
+If you want to move message generation to an external server, your external API should:
+
+### 1. Endpoint
+- Expose a POST endpoint (e.g., `/api/external-chat`)
+
+### 2. Request Format
+- Accept a JSON body with:
+  - `messages`: Array of chat messages (with roles, content, etc.)
+  - `selectedChatModel`: String (model identifier)
+  - `requestHints`: Object (optional, e.g., location info)
+
+Example:
+```json
+{
+  "messages": [
+    { "role": "user", "content": "Hello!" },
+    { "role": "assistant", "content": "Hi! How can I help you?" }
+  ],
+  "selectedChatModel": "chat-model",
+  "requestHints": { "city": "San Francisco" }
+}
+```
+
+### 3. Response Format
+- Should return a streaming response (text/event-stream or chunked JSON/text) with the generated assistant message(s).
+- If streaming is not possible, return the full assistant message in the response body.
+
+Example (non-streaming):
+```json
+{
+  "role": "assistant",
+  "content": "How can I help you today?"
+}
+```
+
+### 4. Authentication (Optional)
+- If your external API requires authentication, ensure your backend can provide the necessary headers/tokens.
+
+### 5. Error Handling
+- Return appropriate HTTP status codes and error messages for invalid requests or server errors.
+
+### 6. Extensibility
+- The API should be stateless and not manage chat history or user data. Only generate responses based on the provided input.
+
+---
+
+See the `getExternalChatResponse` function in `app/(chat)/api/chat/external-chat.ts` for the current local implementation and how to adapt it for remote calls.
+
 ```bash
 pnpm install
 pnpm dev
